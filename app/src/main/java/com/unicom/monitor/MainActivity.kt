@@ -152,7 +152,15 @@ fun AppScreen() {
                     jumpDeltaMb = "%.2f".format(jumpDelta),
                     freeDeltaMb = "%.2f".format(freeDelta),
                 )
-                settings = settings.copy(lastGeneral = d0.usedGb.toString(), lastFree = d0.freeUsedGb.toString())
+                val curDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+                var todayG = if (settings.todayDate == curDate) (settings.todayGeneral.toDoubleOrNull() ?: 0.0) else 0.0
+                todayG += jumpDelta
+                settings = settings.copy(
+                    lastGeneral = d0.usedGb.toString(),
+                    lastFree = d0.freeUsedGb.toString(),
+                    todayGeneral = todayG.toString(),
+                    todayDate = curDate,
+                )
                 repo.save(settings)
                 cards.add(0, d)
                 if (cards.size > 20) cards.removeRange(20, cards.size)
@@ -236,7 +244,7 @@ fun AppScreen() {
                     }
                 }
                 cards.forEach { d ->
-                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor), settings.customText)
+                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor), settings.customText, settings.todayGeneral.toDoubleOrNull() ?: 0.0)
                     Spacer(Modifier.height(10.dp))
                 }
                 Spacer(Modifier.height(70.dp))
@@ -269,7 +277,7 @@ fun AppScreen() {
 }
 
 @Composable
-fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black, customText: String = "") {
+fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black, customText: String = "", todayGeneral: Double = 0.0) {
     val e = NotificationHelper.emojis(emojiSet)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
@@ -307,7 +315,7 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
-                Text("${e[5]} 今日跳量 ➠ ${d.jumpDeltaMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[5]} 今日跳量 ➠ ${"%.2f".format(todayGeneral)}M", fontSize = 15.sp, color = textColor)
                 Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp, color = textColor)
                 Text("————————————————", fontSize = 13.sp, color = Color.Gray)
                 Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp, color = textColor)
@@ -453,20 +461,31 @@ fun SettingsDialog(
                     Text("自定义图片图标（创建快捷方式）")
                 }
                 HorizontalDivider()
-                Text("重置", fontWeight = FontWeight.Bold)
+                Text("重置跳/免/今日跳点", fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("不重置今日跳点", fontSize = 13.sp)
+                    Switch(
+                        checked = settings.keepTodayOnReset,
+                        onCheckedChange = { v -> val s = settings.copy(keepTodayOnReset = v); onUpdate(s); scope.launch { repo.save(s) } }
+                    )
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                         onClick = {
                             scope.launch {
-                                repo.clear()
-                                onUpdate(Settings())
-                                ctx.getSharedPreferences("unicom_reset", 0).edit().putBoolean("done", true).apply()
-                                WorkManager.getInstance(ctx).cancelUniqueWork("unicom_monitor")
-                                message = "已重置所有设置"
+                                val keep = settings.keepTodayOnReset
+                                val s = settings.copy(
+                                    lastGeneral = "",
+                                    lastFree = "",
+                                    todayGeneral = if (keep) settings.todayGeneral else "",
+                                    todayDate = if (keep) settings.todayDate else "",
+                                )
+                                onUpdate(s); repo.save(s)
+                                message = if (keep) "已重置跳/免（保留今日）" else "已重置跳/免/今日"
                             }
                         }
-                    ) { Text("重置所有设置") }
+                    ) { Text("重置") }
                 }
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
