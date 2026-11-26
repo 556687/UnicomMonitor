@@ -21,6 +21,9 @@ data class Settings(
     val customText: String = "",
     val lastGeneral: String = "",
     val lastFree: String = "",
+    val todayGeneral: String = "",
+    val todayDate: String = "",
+    val keepTodayOnReset: Boolean = true,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -36,6 +39,9 @@ class SettingsRepository(private val context: Context) {
     private val KEY_CUSTOM_TEXT = stringPreferencesKey("custom_text")
     private val KEY_LAST_G = stringPreferencesKey("last_general")
     private val KEY_LAST_F = stringPreferencesKey("last_free")
+    private val KEY_TODAY_G = stringPreferencesKey("today_general")
+    private val KEY_TODAY_DATE = stringPreferencesKey("today_date")
+    private val KEY_KEEP_TODAY = stringPreferencesKey("keep_today_reset")
 
     val settings = context.dataStore.data.map { p ->
         Settings(
@@ -51,6 +57,9 @@ class SettingsRepository(private val context: Context) {
             customText = p[KEY_CUSTOM_TEXT] ?: "",
             lastGeneral = p[KEY_LAST_G] ?: "",
             lastFree = p[KEY_LAST_F] ?: "",
+            todayGeneral = p[KEY_TODAY_G] ?: "",
+            todayDate = p[KEY_TODAY_DATE] ?: "",
+            keepTodayOnReset = p[KEY_KEEP_TODAY] != "false",
         )
     }
 
@@ -72,6 +81,9 @@ class SettingsRepository(private val context: Context) {
             p[KEY_CUSTOM_TEXT] = s.customText
             p[KEY_LAST_G] = s.lastGeneral
             p[KEY_LAST_F] = s.lastFree
+            p[KEY_TODAY_G] = s.todayGeneral
+            p[KEY_TODAY_DATE] = s.todayDate
+            p[KEY_KEEP_TODAY] = s.keepTodayOnReset.toString()
         }
     }
 }
