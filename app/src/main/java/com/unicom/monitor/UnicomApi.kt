@@ -14,6 +14,8 @@ data class BalanceData(
     val freeUsedGb: Double = 0.0,
     val remainGb: Double = 0.0,
     val dailyMb: String = "0",
+    val unsharedFlowMb: String = "0",
+    val freeFlowGb: String = "0",
     val fee: String = "",
     val voice: String = "",
     val point: String = "",
@@ -57,7 +59,10 @@ object UnicomApi {
                 remain += sums.getJSONObject(i).optString("xcanusevalue").toDoubleOrNull() ?: 0.0
             }
         }
-        val daily = flowJson.optJSONObject("summary")?.optString("domesticDailyFlow") ?: "0"
+        val summary = flowJson.optJSONObject("summary")
+        val daily = summary?.optString("domesticDailyFlow") ?: "0"
+        val unshared = flowJson.optString("unsharedFlow", "0")
+        val freeFlow = summary?.optString("freeFlow") ?: "0"
 
         val userUrl = "https://m.client.10010.com/mobileserviceimportant/home/queryUserInfoSeven?currentPhone=$mobile&showType=0&version=android@13.0201&desmobile=$mobile"
         val userReq = Request.Builder().url(userUrl).header("Cookie", cookie).header("User-Agent", UA).build()
@@ -82,6 +87,8 @@ object UnicomApi {
             freeUsedGb = freeUsed / 1024.0,
             remainGb = remain / 1024.0,
             dailyMb = daily,
+            unsharedFlowMb = unshared,
+            freeFlowGb = freeFlow,
             fee = fee, voice = voice, point = point,
             updateTime = flowJson.optString("time"),
         )
