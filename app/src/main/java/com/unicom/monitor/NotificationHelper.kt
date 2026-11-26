@@ -63,7 +63,8 @@ object NotificationHelper {
                 val bmp = BitmapFactory.decodeFile(imagePath)
                 if (bmp != null) {
                     builder.setLargeIcon(bmp)
-                    builder.setStyle(NotificationCompat.BigPictureStyle().bigPicture(bmp).bigText(text))
+                    builder.setStyle(NotificationCompat.BigPictureStyle().bigPicture(bmp))
+                    builder.setContentText(text.lines().firstOrNull() ?: text)
                 } else {
                     builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 }
