@@ -482,7 +482,7 @@ fun SettingsDialog(
                                     todayDate = if (keep) settings.todayDate else "",
                                 )
                                 onUpdate(s); repo.save(s)
-                                message = if (keep) "已重置跳/免（保留今日）" else "已重置跳/免/今日"
+                                android.widget.Toast.makeText(ctx, if (keep) "已重置跳/免（保留今日）" else "已重置跳/免/今日", android.widget.Toast.LENGTH_SHORT).show()
                             }
                         }
                     ) { Text("重置") }
