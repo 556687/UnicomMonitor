@@ -52,6 +52,14 @@ object UnicomApi {
                 }
             }
         }
+        // 免流明细（MlResources 合计，会随使用变化）
+        var mlTotal = 0.0
+        val mlArr = flowJson.optJSONArray("MlResources")
+        if (mlArr != null) {
+            for (i in 0 until mlArr.length()) {
+                mlTotal += mlArr.getJSONObject(i).optString("userResource").toDoubleOrNull() ?: 0.0
+            }
+        }
         var remain = 0.0
         val sums = flowJson.optJSONArray("flowSumList")
         if (sums != null) {
@@ -88,7 +96,7 @@ object UnicomApi {
             remainGb = remain / 1024.0,
             dailyMb = daily,
             unsharedFlowMb = unshared,
-            freeFlowGb = freeFlow,
+            freeFlowGb = if (mlTotal > 0) "%.2f".format(mlTotal) else freeFlow,
             fee = fee, voice = voice, point = point,
             updateTime = flowJson.optString("time"),
         )
