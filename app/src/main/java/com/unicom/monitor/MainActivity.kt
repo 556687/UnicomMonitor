@@ -2,30 +2,36 @@ package com.unicom.monitor
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import android.graphics.BitmapFactory
-import java.io.File
 import androidx.core.content.ContextCompat
 import androidx.work.*
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
@@ -47,16 +53,15 @@ fun AppScreen() {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val repo = remember { SettingsRepository(ctx) }
     var settings by remember { mutableStateOf(Settings()) }
-    var balance by remember { mutableStateOf<BalanceData?>(null) }
+    val cards = remember { mutableStateListOf<BalanceData>() }
+    var showSettings by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { repo.settings.collect { settings = it } }
 
-    val pickImage = androidx.activity.compose.rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
             try {
                 val file = File(ctx.filesDir, "emoji_image")
@@ -66,146 +71,206 @@ fun AppScreen() {
                 settings = settings.copy(imagePath = file.absolutePath)
                 scope.launch { repo.save(settings) }
                 message = "表情包图片已保存"
-            } catch (e: Exception) {
-                message = "图片保存失败: ${e.message}"
-            }
+            } catch (e: Exception) { message = "图片保存失败: ${e.message}" }
+        }
+    }
+
+    val pickBg = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            try {
+                val file = File(ctx.filesDir, "chat_bg")
+                ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    file.outputStream().use { output -> input.copyTo(output) }
+                }
+                settings = settings.copy(bgPath = file.absolutePath)
+                scope.launch { repo.save(settings) }
+                message = "背景已设置"
+            } catch (e: Exception) { message = "背景设置失败: ${e.message}" }
         }
     }
 
     fun refresh() {
-        if (settings.cookie.isBlank()) { message = "请先填写 cookie"; return }
+        if (settings.cookie.isBlank()) { message = "请先在右上角设置里填写 cookie"; showSettings = true; return }
         loading = true; message = ""
         scope.launch {
             try {
                 val d = UnicomApi.fetchBalance(settings.cookie, settings.mobile)
-                balance = d
+                cards.add(0, d)
+                if (cards.size > 20) cards.removeRange(20, cards.size)
                 NotificationHelper.notify(ctx, "联通余量", NotificationHelper.buildText(d, settings.emojiSet), settings.imagePath)
                 message = "刷新成功"
-            } catch (e: Exception) {
-                message = "失败: ${e.message}"
-            } finally { loading = false }
+            } catch (e: Exception) { message = "失败: ${e.message}" }
+            finally { loading = false }
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Text("联通流量监控", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("联通流量监控") },
+                actions = {
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(Icons.Default.Settings, contentDescription = "设置")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            if (settings.bgPath.isNotEmpty()) {
+                val bg = remember(settings.bgPath) { BitmapFactory.decodeFile(settings.bgPath) }
+                if (bg != null) {
+                    Image(bg.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                }
+            }
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
+                if (cards.isEmpty()) {
+                    Card(Modifier.fillMaxWidth().padding(8.dp)) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("还没有数据", fontWeight = FontWeight.Bold)
+                            Text("点底部按钮查询，或在右上角设置里填写 cookie", fontSize = 13.sp)
+                        }
+                    }
+                }
+                cards.forEach { d ->
+                    BalanceCard(d, settings.emojiSet)
+                    Spacer(Modifier.height(10.dp))
+                }
+                Spacer(Modifier.height(70.dp))
+            }
+            Button(
+                onClick = { refresh() },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp).fillMaxWidth(),
+                enabled = !loading
+            ) { Text(if (loading) "查询中..." else "立即查询并推送") }
+        }
+    }
 
-        Card {
-            Column(Modifier.padding(16.dp)) {
-                Text("登录凭据", fontWeight = FontWeight.Bold)
+    if (message.isNotEmpty()) {
+        LaunchedEffect(message) {
+            kotlinx.coroutines.delay(2500)
+            message = ""
+        }
+    }
+
+    if (showSettings) {
+        SettingsDialog(
+            settings = settings,
+            repo = repo,
+            onUpdate = { settings = it },
+            onPickImage = { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPickBg = { pickBg.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onClose = { showSettings = false },
+            ctx = ctx,
+        )
+    }
+}
+
+@Composable
+fun BalanceCard(d: BalanceData, emojiSet: String) {
+    val e = NotificationHelper.emojis(emojiSet)
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Spacer(Modifier.height(4.dp))
+            Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp)
+            Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp)
+            Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp)
+            Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp)
+            Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp)
+            Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp)
+            Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp)
+            Text("————————————————", fontSize = 13.sp, color = Color.Gray)
+            Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp)
+            Spacer(Modifier.height(3.dp))
+            Text("💰 剩余话费 ➠ ${d.fee}元", fontSize = 14.sp)
+            Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 14.sp)
+            Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 14.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(quotes.random(), fontSize = 12.sp, color = Color.Gray)
+            Text(d.updateTime, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.align(Alignment.End))
+        }
+    }
+}
+
+private val quotes = listOf(
+    "人吃饭，说饭香，人洗碗，说碗脏。 ----网络",
+    "猫是可爱的，狼是很帅的。就是说，孤独又可爱又帅。 ----我的青春恋爱物语果然有问题",
+    "众口铄金，积毁销骨。 ----史记·张仪列传",
+    "来啊，让我看看你们这些渣滓还有什么花样。 ----明日方舟",
+    "博文天下，遍理人间！ ----自己",
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsDialog(
+    settings: Settings,
+    repo: SettingsRepository,
+    onUpdate: (Settings) -> Unit,
+    onPickImage: () -> Unit,
+    onPickBg: () -> Unit,
+    onClose: () -> Unit,
+    ctx: android.content.Context,
+) {
+    val scope = rememberCoroutineScope()
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("设置") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = settings.cookie,
-                    onValueChange = { v -> settings = settings.copy(cookie = v); scope.launch { repo.save(settings) } },
-                    label = { Text("cookie") },
-                    modifier = Modifier.fillMaxWidth(),
-                    minLines = 2
+                    onValueChange = { v -> val s = settings.copy(cookie = v); onUpdate(s); scope.launch { repo.save(s) } },
+                    label = { Text("cookie（必填）") },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = settings.mobile,
-                    onValueChange = { v -> settings = settings.copy(mobile = v); scope.launch { repo.save(settings) } },
+                    onValueChange = { v -> val s = settings.copy(mobile = v); onUpdate(s); scope.launch { repo.save(s) } },
                     label = { Text("手机号") },
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-        }
-
-        Card {
-            Column(Modifier.padding(16.dp)) {
                 Text("表情风格", fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf("classic" to "经典", "animal" to "动物", "color" to "色块", "tech" to "科技").forEach { (k, label) ->
                         FilterChip(
                             selected = settings.emojiSet == k,
-                            onClick = { settings = settings.copy(emojiSet = k); scope.launch { repo.save(settings) } },
+                            onClick = { val s = settings.copy(emojiSet = k); onUpdate(s); scope.launch { repo.save(s) } },
                             label = { Text(label) }
                         )
                     }
                 }
-                Text("预览: " + NotificationHelper.emojis(settings.emojiSet).joinToString(" "), fontSize = 13.sp)
-            }
-        }
-
-        Card {
-            Column(Modifier.padding(16.dp)) {
-                Text("表情包图片（可选）", fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = {
-                        pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                    }) { Text("选择图片") }
-                    if (settings.imagePath.isNotEmpty()) {
-                        Button(onClick = {
-                            settings = settings.copy(imagePath = "")
-                            scope.launch { repo.save(settings) }
-                            message = "已清除图片"
-                        }) { Text("清除") }
-                    }
-                }
-                if (settings.imagePath.isNotEmpty()) {
-                    val bmp = remember(settings.imagePath) { BitmapFactory.decodeFile(settings.imagePath) }
-                    if (bmp != null) {
-                        Image(
-                            bitmap = bmp.asImageBitmap(),
-                            contentDescription = "表情包预览",
-                            modifier = Modifier.fillMaxWidth().height(120.dp),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-                }
-            }
-        }
-
-        Card {
-            Column(Modifier.padding(16.dp)) {
                 Text("查询间隔", fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(1, 2, 6, 12).forEach { h ->
                         FilterChip(
                             selected = settings.intervalHours == h,
                             onClick = {
-                                settings = settings.copy(intervalHours = h)
-                                scope.launch { repo.save(settings) }
+                                val s = settings.copy(intervalHours = h); onUpdate(s); scope.launch { repo.save(s) }
                                 val work = PeriodicWorkRequestBuilder<MonitorWorker>(h.toLong(), TimeUnit.HOURS).build()
-                                WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(
-                                    "unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work
-                                )
-                                message = "已设置为每 $h 小时"
+                                WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work)
                             },
                             label = { Text("${h}h") }
                         )
                     }
                 }
-            }
-        }
-
-        Button(onClick = { refresh() }, modifier = Modifier.fillMaxWidth(), enabled = !loading) {
-            Text(if (loading) "查询中..." else "立即查询并推送")
-        }
-        if (message.isNotEmpty()) Text(message, fontSize = 13.sp)
-
-        balance?.let { d ->
-            val e = NotificationHelper.emojis(settings.emojiSet)
-            Card {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                    Spacer(Modifier.height(6.dp))
-                    Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp)
-                    Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp)
-                    Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp)
-                    Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp)
-                    Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp)
-                    Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp)
-                    Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp)
-                    Text("————————————————", fontSize = 14.sp)
-                    Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp)
-                    Spacer(Modifier.height(4.dp))
-                    Text("💰 剩余话费 ➠ ${d.fee}元", fontSize = 15.sp)
-                    Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 15.sp)
-                    Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 15.sp)
+                Text("表情包图片（通知）", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Button(onClick = onPickImage) { Text("选择") }
+                    Button(onClick = { val s = settings.copy(imagePath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
+                }
+                Text("聊天气泡背景", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Button(onClick = onPickBg) { Text("选择背景") }
+                    Button(onClick = { val s = settings.copy(bgPath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
                 }
             }
-        }
-    }
+        },
+        confirmButton = { TextButton(onClick = onClose) { Text("完成") } }
+    )
 }
