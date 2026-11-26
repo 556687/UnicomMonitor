@@ -13,11 +13,55 @@
         android:theme="@style/Theme.UnicomMonitor">
         <activity
             android:name=".MainActivity"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".IconBlue"
+            android:enabled="true"
+            android:icon="@mipmap/ic_launcher_blue"
+            android:label="联通流量监控"
+            android:targetActivity=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconGreen"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_green"
+            android:label="联通流量监控"
+            android:targetActivity=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconPurple"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_purple"
+            android:label="联通流量监控"
+            android:targetActivity=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".IconOrange"
+            android:enabled="false"
+            android:icon="@mipmap/ic_launcher_orange"
+            android:label="联通流量监控"
+            android:targetActivity=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
     </application>
 </manifest>
