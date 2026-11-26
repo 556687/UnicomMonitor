@@ -117,7 +117,17 @@ fun AppScreen() {
         loading = true; message = ""
         scope.launch {
             try {
-                val d = UnicomApi.fetchBalance(settings.cookie, settings.mobile)
+                val d0 = UnicomApi.fetchBalance(settings.cookie, settings.mobile)
+                val prevG = settings.lastGeneral.toDoubleOrNull()
+                val prevF = settings.lastFree.toDoubleOrNull()
+                val jumpDelta = if (prevG != null) ((d0.usedGb - prevG) * 1024).coerceAtLeast(0.0) else 0.0
+                val freeDelta = if (prevF != null) ((d0.freeUsedGb - prevF) * 1024).coerceAtLeast(0.0) else 0.0
+                val d = d0.copy(
+                    jumpDeltaMb = "%.2f".format(jumpDelta),
+                    freeDeltaMb = "%.2f".format(freeDelta),
+                )
+                settings = settings.copy(lastGeneral = d0.usedGb.toString(), lastFree = d0.freeUsedGb.toString())
+                repo.save(settings)
                 cards.add(0, d)
                 if (cards.size > 20) cards.removeRange(20, cards.size)
                 NotificationHelper.notify(ctx, "联通余量", NotificationHelper.buildText(d, settings.emojiSet), settings.imagePath)
@@ -265,12 +275,12 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text("${e[0]} 跳 ➠ ${d.unsharedFlowMb}M", fontSize = 15.sp, color = textColor)
-                Text("${e[1]} 免 ➠ ${d.freeFlowGb}G", fontSize = 15.sp, color = textColor)
+                Text("${e[0]} 跳 ➠ ${d.jumpDeltaMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免 ➠ ${d.freeDeltaMb}M", fontSize = 15.sp, color = textColor)
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
-                Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[5]} 今日跳量 ➠ ${d.jumpDeltaMb}M", fontSize = 15.sp, color = textColor)
                 Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp, color = textColor)
                 Text("————————————————", fontSize = 13.sp, color = Color.Gray)
                 Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp, color = textColor)
