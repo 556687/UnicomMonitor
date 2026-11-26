@@ -123,7 +123,21 @@ fun AppScreen() {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("联通流量监控") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val topAvatar = remember(settings.avatarPath) {
+                            if (settings.avatarPath.isNotEmpty()) BitmapFactory.decodeFile(settings.avatarPath) else null
+                        }
+                        if (topAvatar != null) {
+                            Image(topAvatar.asImageBitmap(), null, Modifier.size(34.dp).clip(RoundedCornerShape(50)), contentScale = ContentScale.Crop)
+                        } else {
+                            Box(Modifier.size(34.dp).clip(RoundedCornerShape(50)).background(Color(0xFF2196F3)), contentAlignment = Alignment.Center) {
+                                Text("联", color = Color.White, fontSize = 15.sp)
+                            }
+                        }
+                        Text("联通流量监控")
+                    }
+                },
                 actions = {
                     IconButton(onClick = { refresh() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "刷新")
@@ -152,7 +166,7 @@ fun AppScreen() {
                     }
                 }
                 cards.forEach { d ->
-                    BalanceCard(d, settings.emojiSet, settings.avatarPath)
+                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor))
                     Spacer(Modifier.height(10.dp))
                 }
                 Spacer(Modifier.height(70.dp))
@@ -183,7 +197,7 @@ fun AppScreen() {
 }
 
 @Composable
-fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String) {
+fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black) {
     val e = NotificationHelper.emojis(emojiSet)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
@@ -211,30 +225,37 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String) {
         Card(
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.82f))
+            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.55f))
         ) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp)
-                Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp)
-                Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp)
-                Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp)
-                Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp)
-                Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp)
-                Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp)
+                Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp, color = textColor)
+                Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
+                Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
+                Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
+                Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp, color = textColor)
                 Text("————————————————", fontSize = 13.sp, color = Color.Gray)
-                Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp)
+                Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp, color = textColor)
                 Spacer(Modifier.height(3.dp))
-                Text("💰 剩余话费 ➠ ${d.fee}元", fontSize = 14.sp)
-                Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 14.sp)
-                Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 14.sp)
+                Text("💰 剩余话费 ➠ ${d.fee}元", fontSize = 14.sp, color = textColor)
+                Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 14.sp, color = textColor)
+                Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
                 Text(quotes.random(), fontSize = 12.sp, color = Color.Gray)
                 Text(d.updateTime, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.align(Alignment.End))
             }
         }
     }
+}
+
+fun resolveTextColor(name: String): Color = when (name) {
+    "white" -> Color.White
+    "gray" -> Color(0xFF37474F)
+    "blue" -> Color(0xFF0D47A1)
+    else -> Color.Black
 }
 
 private val quotes = listOf(
@@ -300,6 +321,31 @@ fun SettingsDialog(
                         )
                     }
                 }
+                Text("字体颜色", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("black" to "黑", "white" to "白", "gray" to "深灰", "blue" to "深蓝").forEach { (k, label) ->
+                        FilterChip(
+                            selected = settings.textColor == k,
+                            onClick = { val s = settings.copy(textColor = k); onUpdate(s); scope.launch { repo.save(s) } },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+                Text("自定义查询间隔（小时，留空用上面的）", fontWeight = FontWeight.Bold)
+                OutlinedTextField(
+                    value = settings.customInterval,
+                    onValueChange = { v ->
+                        val s = settings.copy(customInterval = v)
+                        onUpdate(s); scope.launch { repo.save(s) }
+                        val h = v.toIntOrNull()
+                        if (h != null && h in 1..72) {
+                            val work = PeriodicWorkRequestBuilder<MonitorWorker>(h.toLong(), TimeUnit.HOURS).build()
+                            WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work)
+                        }
+                    },
+                    label = { Text("例如 3") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Text("表情包图片（通知）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickImage) { Text("选择") }
