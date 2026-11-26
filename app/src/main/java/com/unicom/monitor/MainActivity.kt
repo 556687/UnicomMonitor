@@ -1,6 +1,8 @@
 package com.unicom.monitor
 
 import android.Manifest
+import android.content.ComponentName
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
@@ -287,6 +289,17 @@ fun resolveTextColor(name: String): Color = when (name) {
     else -> Color.Black
 }
 
+fun switchIcon(ctx: Context, alias: String) {
+    val pm = ctx.packageManager
+    listOf("IconBlue", "IconGreen", "IconPurple", "IconOrange").forEach { n ->
+        pm.setComponentEnabledSetting(
+            ComponentName(ctx, "com.unicom.monitor.$n"),
+            if (n == alias) PackageManager.COMPONENT_ENABLED_STATE_ENABLED else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+            PackageManager.DONT_KILL_APP
+        )
+    }
+}
+
 private val quotes = listOf(
     "人吃饭，说饭香，人洗碗，说碗脏。 ----网络",
     "猫是可爱的，狼是很帅的。就是说，孤独又可爱又帅。 ----我的青春恋爱物语果然有问题",
@@ -384,6 +397,12 @@ fun SettingsDialog(
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickBg) { Text("选择背景") }
                     Button(onClick = { val s = settings.copy(bgPath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
+                }
+                Text("App 图标", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf("IconBlue" to "蓝", "IconGreen" to "绿", "IconPurple" to "紫", "IconOrange" to "橙").forEach { (k, label) ->
+                        Button(onClick = { switchIcon(ctx, k) }) { Text(label) }
+                    }
                 }
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
