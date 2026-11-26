@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.PickVisualMediaRequest
@@ -39,6 +40,7 @@ import java.util.concurrent.TimeUnit
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         if (Build.VERSION.SDK_INT >= 33) {
             val launcher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -120,7 +122,15 @@ fun AppScreen() {
         }
     }
 
+    Box(Modifier.fillMaxSize()) {
+        if (settings.bgPath.isNotEmpty()) {
+            val bg = remember(settings.bgPath) { BitmapFactory.decodeFile(settings.bgPath) }
+            if (bg != null) {
+                Image(bg.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            }
+        }
     Scaffold(
+        containerColor = Color.Transparent,
         bottomBar = {
             var inputText by remember { mutableStateOf(settings.customText) }
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -167,12 +177,6 @@ fun AppScreen() {
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
-            if (settings.bgPath.isNotEmpty()) {
-                val bg = remember(settings.bgPath) { BitmapFactory.decodeFile(settings.bgPath) }
-                if (bg != null) {
-                    Image(bg.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                }
-            }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
                 if (message.isNotEmpty()) {
                     Card(Modifier.fillMaxWidth().padding(4.dp),
@@ -217,6 +221,7 @@ fun AppScreen() {
             onClose = { showSettings = false },
             ctx = ctx,
         )
+    }
     }
 }
 
@@ -355,19 +360,19 @@ fun SettingsDialog(
                         )
                     }
                 }
-                Text("自定义查询间隔（小时，留空用上面的）", fontWeight = FontWeight.Bold)
+                Text("查询间隔（分钟，最小 15）", fontWeight = FontWeight.Bold)
                 OutlinedTextField(
                     value = settings.customInterval,
                     onValueChange = { v ->
                         val s = settings.copy(customInterval = v)
                         onUpdate(s); scope.launch { repo.save(s) }
-                        val h = v.toIntOrNull()
-                        if (h != null && h in 1..72) {
-                            val work = PeriodicWorkRequestBuilder<MonitorWorker>(h.toLong(), TimeUnit.HOURS).build()
+                        val m = v.toIntOrNull()
+                        if (m != null && m >= 15) {
+                            val work = PeriodicWorkRequestBuilder<MonitorWorker>(m.toLong(), TimeUnit.MINUTES).build()
                             WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work)
                         }
                     },
-                    label = { Text("例如 3") },
+                    label = { Text("例如 30（分钟）") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Text("表情包图片（通知）", fontWeight = FontWeight.Bold)
