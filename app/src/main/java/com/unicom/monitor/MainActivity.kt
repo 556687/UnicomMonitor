@@ -42,6 +42,10 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.TimeUnit
 
+val appScope = kotlinx.coroutines.CoroutineScope(
+    kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.SupervisorJob()
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,7 +84,7 @@ fun AppScreen() {
                     file.outputStream().use { output -> input.copyTo(output) }
                 }
                 settings = settings.copy(imagePath = file.absolutePath)
-                scope.launch { repo.save(settings) }
+                appScope.launch { repo.save(settings) }
                 message = "表情包图片已保存"
             } catch (e: Exception) { message = "图片保存失败: ${e.message}" }
         }
@@ -94,7 +98,7 @@ fun AppScreen() {
                     file.outputStream().use { output -> input.copyTo(output) }
                 }
                 settings = settings.copy(bgPath = file.absolutePath)
-                scope.launch { repo.save(settings) }
+                appScope.launch { repo.save(settings) }
                 message = "背景已设置"
             } catch (e: Exception) { message = "背景设置失败: ${e.message}" }
         }
@@ -132,7 +136,7 @@ fun AppScreen() {
                     file.outputStream().use { output -> input.copyTo(output) }
                 }
                 settings = settings.copy(avatarPath = file.absolutePath)
-                scope.launch { repo.save(settings) }
+                appScope.launch { repo.save(settings) }
                 message = "头像已设置"
             } catch (e: Exception) { message = "头像设置失败: ${e.message}" }
         }
@@ -192,7 +196,7 @@ fun AppScreen() {
                 )
                 Button(onClick = {
                     settings = settings.copy(customText = inputText)
-                    scope.launch { repo.save(settings) }
+                    appScope.launch { repo.save(settings) }
                     message = "已保存"
                 }) { Text("保存") }
             }
@@ -378,14 +382,14 @@ fun SettingsDialog(
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = settings.cookie,
-                    onValueChange = { v -> val s = settings.copy(cookie = v); onUpdate(s); scope.launch { repo.save(s) } },
+                    onValueChange = { v -> val s = settings.copy(cookie = v); onUpdate(s); appScope.launch { repo.save(s) } },
                     label = { Text("cookie（必填）") },
                     minLines = 2,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = settings.mobile,
-                    onValueChange = { v -> val s = settings.copy(mobile = v); onUpdate(s); scope.launch { repo.save(s) } },
+                    onValueChange = { v -> val s = settings.copy(mobile = v); onUpdate(s); appScope.launch { repo.save(s) } },
                     label = { Text("手机号") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -394,7 +398,7 @@ fun SettingsDialog(
                     listOf("classic" to "经典", "animal" to "动物", "color" to "色块", "tech" to "科技").forEach { (k, label) ->
                         FilterChip(
                             selected = settings.emojiSet == k,
-                            onClick = { val s = settings.copy(emojiSet = k); onUpdate(s); scope.launch { repo.save(s) } },
+                            onClick = { val s = settings.copy(emojiSet = k); onUpdate(s); appScope.launch { repo.save(s) } },
                             label = { Text(label) }
                         )
                     }
@@ -405,7 +409,7 @@ fun SettingsDialog(
                         FilterChip(
                             selected = settings.intervalHours == h,
                             onClick = {
-                                val s = settings.copy(intervalHours = h); onUpdate(s); scope.launch { repo.save(s) }
+                                val s = settings.copy(intervalHours = h); onUpdate(s); appScope.launch { repo.save(s) }
                                 val work = PeriodicWorkRequestBuilder<MonitorWorker>(h.toLong(), TimeUnit.HOURS).build()
                                 WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work)
                             },
@@ -418,7 +422,7 @@ fun SettingsDialog(
                     listOf("black" to "黑", "white" to "白", "gray" to "深灰", "blue" to "深蓝").forEach { (k, label) ->
                         FilterChip(
                             selected = settings.textColor == k,
-                            onClick = { val s = settings.copy(textColor = k); onUpdate(s); scope.launch { repo.save(s) } },
+                            onClick = { val s = settings.copy(textColor = k); onUpdate(s); appScope.launch { repo.save(s) } },
                             label = { Text(label) }
                         )
                     }
@@ -428,7 +432,7 @@ fun SettingsDialog(
                     value = settings.customInterval,
                     onValueChange = { v ->
                         val s = settings.copy(customInterval = v)
-                        onUpdate(s); scope.launch { repo.save(s) }
+                        onUpdate(s); appScope.launch { repo.save(s) }
                         val m = v.toIntOrNull()
                         if (m != null && m >= 1) {
                             // OneTimeWork + 完成后自调度，支持 1 分钟起（绕过 15 分钟限制）
@@ -444,12 +448,12 @@ fun SettingsDialog(
                 Text("表情包图片（通知）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickImage) { Text("选择") }
-                    Button(onClick = { val s = settings.copy(imagePath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
+                    Button(onClick = { val s = settings.copy(imagePath = ""); onUpdate(s); appScope.launch { repo.save(s) } }) { Text("清除") }
                 }
                 Text("聊天气泡背景", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickBg) { Text("选择背景") }
-                    Button(onClick = { val s = settings.copy(bgPath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
+                    Button(onClick = { val s = settings.copy(bgPath = ""); onUpdate(s); appScope.launch { repo.save(s) } }) { Text("清除") }
                 }
                 Text("App 图标", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -466,7 +470,7 @@ fun SettingsDialog(
                     Text("不重置今日跳点", fontSize = 13.sp)
                     Switch(
                         checked = settings.keepTodayOnReset,
-                        onCheckedChange = { v -> val s = settings.copy(keepTodayOnReset = v); onUpdate(s); scope.launch { repo.save(s) } }
+                        onCheckedChange = { v -> val s = settings.copy(keepTodayOnReset = v); onUpdate(s); appScope.launch { repo.save(s) } }
                     )
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -490,7 +494,7 @@ fun SettingsDialog(
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickAvatar) { Text("选择头像") }
-                    Button(onClick = { val s = settings.copy(avatarPath = ""); onUpdate(s); scope.launch { repo.save(s) } }) { Text("清除") }
+                    Button(onClick = { val s = settings.copy(avatarPath = ""); onUpdate(s); appScope.launch { repo.save(s) } }) { Text("清除") }
                 }
             }
         },
