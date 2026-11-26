@@ -186,13 +186,24 @@ fun AppScreen() {
         if (message.isNotEmpty()) Text(message, fontSize = 13.sp)
 
         balance?.let { d ->
+            val e = NotificationHelper.emojis(settings.emojiSet)
             Card {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(d.packageName, fontWeight = FontWeight.Bold)
-                    Text("总流量: ${"%.2f".format(d.totalGb)}G  剩余: ${"%.2f".format(d.remainGb)}G")
-                    Text("已消耗: ${"%.2f".format(d.usedGb)}G  免流已用: ${"%.2f".format(d.freeUsedGb)}G")
-                    Text("话费: ${d.fee}元  语音: ${d.voice}分  积分: ${d.point}")
-                    Text("更新: ${d.updateTime}", fontSize = 12.sp)
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Spacer(Modifier.height(6.dp))
+                    Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp)
+                    Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp)
+                    Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp)
+                    Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp)
+                    Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp)
+                    Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp)
+                    Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp)
+                    Text("————————————————", fontSize = 14.sp)
+                    Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp)
+                    Spacer(Modifier.height(4.dp))
+                    Text("💰 剩余话费 ➠ ${d.fee}元", fontSize = 15.sp)
+                    Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 15.sp)
+                    Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 15.sp)
                 }
             }
         }
