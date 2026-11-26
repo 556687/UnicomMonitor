@@ -15,6 +15,7 @@ data class Settings(
     val emojiSet: String = "classic",
     val imagePath: String = "",
     val bgPath: String = "",
+    val avatarPath: String = "",
 )
 
 class SettingsRepository(private val context: Context) {
@@ -24,6 +25,7 @@ class SettingsRepository(private val context: Context) {
     private val KEY_EMOJI = stringPreferencesKey("emoji")
     private val KEY_IMAGE = stringPreferencesKey("image")
     private val KEY_BG = stringPreferencesKey("bg")
+    private val KEY_AVATAR = stringPreferencesKey("avatar")
 
     val settings = context.dataStore.data.map { p ->
         Settings(
@@ -33,6 +35,7 @@ class SettingsRepository(private val context: Context) {
             emojiSet = p[KEY_EMOJI] ?: "classic",
             imagePath = p[KEY_IMAGE] ?: "",
             bgPath = p[KEY_BG] ?: "",
+            avatarPath = p[KEY_AVATAR] ?: "",
         )
     }
 
@@ -44,6 +47,7 @@ class SettingsRepository(private val context: Context) {
             p[KEY_EMOJI] = s.emojiSet
             p[KEY_IMAGE] = s.imagePath
             p[KEY_BG] = s.bgPath
+            p[KEY_AVATAR] = s.avatarPath
         }
     }
 }
