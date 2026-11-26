@@ -54,7 +54,7 @@ object NotificationHelper {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle(title)
-            .setContentText("点击查看流量详情")
+            .setContentText(text.lines().firstOrNull { it.isNotBlank() } ?: "点击查看详情")
             .setContentIntent(pi)
             .setAutoCancel(true)
         if (imagePath != null && imagePath.isNotEmpty()) {
