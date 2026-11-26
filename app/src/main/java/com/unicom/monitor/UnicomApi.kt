@@ -16,6 +16,8 @@ data class BalanceData(
     val dailyMb: String = "0",
     val unsharedFlowMb: String = "0",
     val freeFlowGb: String = "0",
+    val jumpDeltaMb: String = "0.00",
+    val freeDeltaMb: String = "0.00",
     val fee: String = "",
     val voice: String = "",
     val point: String = "",
