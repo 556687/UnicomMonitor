@@ -174,6 +174,13 @@ fun AppScreen() {
                 }
             }
             Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp)) {
+                if (message.isNotEmpty()) {
+                    Card(Modifier.fillMaxWidth().padding(4.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0))) {
+                        Text(message, fontSize = 13.sp, color = Color(0xFFD84315), modifier = Modifier.padding(10.dp))
+                    }
+                    Spacer(Modifier.height(6.dp))
+                }
                 if (cards.isEmpty()) {
                     Card(Modifier.fillMaxWidth().padding(8.dp)) {
                         Column(Modifier.padding(16.dp)) {
@@ -194,7 +201,7 @@ fun AppScreen() {
 
     if (message.isNotEmpty()) {
         LaunchedEffect(message) {
-            kotlinx.coroutines.delay(2500)
+            kotlinx.coroutines.delay(8000)
             message = ""
         }
     }
