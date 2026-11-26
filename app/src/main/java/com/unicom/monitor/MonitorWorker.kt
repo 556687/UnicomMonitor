@@ -3,11 +3,12 @@ package com.unicom.monitor
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.flow.first
 
 class MonitorWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
         val repo = SettingsRepository(applicationContext)
-        val s = kotlinx.coroutines.flow.first(repo.settings)
+        val s = repo.settings.first()
         if (s.cookie.isBlank()) return Result.success()
         return try {
             val data = UnicomApi.fetchBalance(s.cookie, s.mobile)
