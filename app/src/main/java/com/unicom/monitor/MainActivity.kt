@@ -311,7 +311,7 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
                 Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
                 Text("${e[0]} 跳 ➠ ${d.jumpDeltaMb}M", fontSize = 15.sp, color = textColor)
-                Text("${e[1]} 免 ➠ ${d.freeDeltaMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免 ➠ ${d.freeFlowGb}G", fontSize = 15.sp, color = textColor)
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
