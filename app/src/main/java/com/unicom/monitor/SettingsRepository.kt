@@ -54,6 +54,10 @@ class SettingsRepository(private val context: Context) {
         )
     }
 
+    suspend fun clear() {
+        context.dataStore.edit { it.clear() }
+    }
+
     suspend fun save(s: Settings) {
         context.dataStore.edit { p ->
             p[KEY_COOKIE] = s.cookie
