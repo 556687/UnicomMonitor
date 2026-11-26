@@ -19,6 +19,8 @@ data class Settings(
     val textColor: String = "black",
     val customInterval: String = "",
     val customText: String = "",
+    val lastGeneral: String = "",
+    val lastFree: String = "",
 )
 
 class SettingsRepository(private val context: Context) {
@@ -32,6 +34,8 @@ class SettingsRepository(private val context: Context) {
     private val KEY_TEXTCOLOR = stringPreferencesKey("textcolor")
     private val KEY_INTERVAL_CUSTOM = stringPreferencesKey("interval_custom")
     private val KEY_CUSTOM_TEXT = stringPreferencesKey("custom_text")
+    private val KEY_LAST_G = stringPreferencesKey("last_general")
+    private val KEY_LAST_F = stringPreferencesKey("last_free")
 
     val settings = context.dataStore.data.map { p ->
         Settings(
@@ -45,6 +49,8 @@ class SettingsRepository(private val context: Context) {
             textColor = p[KEY_TEXTCOLOR] ?: "black",
             customInterval = p[KEY_INTERVAL_CUSTOM] ?: "",
             customText = p[KEY_CUSTOM_TEXT] ?: "",
+            lastGeneral = p[KEY_LAST_G] ?: "",
+            lastFree = p[KEY_LAST_F] ?: "",
         )
     }
 
@@ -60,6 +66,8 @@ class SettingsRepository(private val context: Context) {
             p[KEY_TEXTCOLOR] = s.textColor
             p[KEY_INTERVAL_CUSTOM] = s.customInterval
             p[KEY_CUSTOM_TEXT] = s.customText
+            p[KEY_LAST_G] = s.lastGeneral
+            p[KEY_LAST_F] = s.lastFree
         }
     }
 }
