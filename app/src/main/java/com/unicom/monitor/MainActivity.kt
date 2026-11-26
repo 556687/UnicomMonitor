@@ -452,6 +452,22 @@ fun SettingsDialog(
                 Button(onClick = onPickAppIcon) {
                     Text("自定义图片图标（创建快捷方式）")
                 }
+                HorizontalDivider()
+                Text("重置", fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Button(
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                        onClick = {
+                            scope.launch {
+                                repo.clear()
+                                onUpdate(Settings())
+                                ctx.getSharedPreferences("unicom_reset", 0).edit().putBoolean("done", true).apply()
+                                WorkManager.getInstance(ctx).cancelUniqueWork("unicom_monitor")
+                                message = "已重置所有设置"
+                            }
+                        }
+                    ) { Text("重置所有设置") }
+                }
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Button(onClick = onPickAvatar) { Text("选择头像") }
