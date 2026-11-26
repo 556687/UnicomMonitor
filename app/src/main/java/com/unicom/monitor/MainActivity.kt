@@ -121,6 +121,23 @@ fun AppScreen() {
     }
 
     Scaffold(
+        bottomBar = {
+            var inputText by remember { mutableStateOf(settings.customText) }
+            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedTextField(
+                    value = inputText,
+                    onValueChange = { inputText = it },
+                    modifier = Modifier.weight(1f),
+                    placeholder = { Text("输入卡片底部文字") },
+                    singleLine = true
+                )
+                Button(onClick = {
+                    settings = settings.copy(customText = inputText)
+                    scope.launch { repo.save(settings) }
+                    message = "已保存"
+                }) { Text("保存") }
+            }
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -166,7 +183,7 @@ fun AppScreen() {
                     }
                 }
                 cards.forEach { d ->
-                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor))
+                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor), settings.customText)
                     Spacer(Modifier.height(10.dp))
                 }
                 Spacer(Modifier.height(70.dp))
@@ -197,7 +214,7 @@ fun AppScreen() {
 }
 
 @Composable
-fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black) {
+fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black, customText: String = "") {
     val e = NotificationHelper.emojis(emojiSet)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
@@ -230,8 +247,8 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text("${e[0]} 跳 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
-                Text("${e[1]} 免 ➠ 0M", fontSize = 15.sp, color = textColor)
+                Text("${e[0]} 跳 ➠ ${d.unsharedFlowMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免 ➠ ${d.freeFlowGb}G", fontSize = 15.sp, color = textColor)
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
@@ -244,7 +261,7 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
                 Text("📞 剩余语音 ➠ ${d.voice}分钟", fontSize = 14.sp, color = textColor)
                 Text("⭐ 可用积分 ➠ ${d.point}", fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text(quotes.random(), fontSize = 12.sp, color = Color.Gray)
+                Text(customText.ifBlank { quotes.random() }, fontSize = 12.sp, color = Color.Gray)
                 Text(d.updateTime, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.align(Alignment.End))
             }
         }
