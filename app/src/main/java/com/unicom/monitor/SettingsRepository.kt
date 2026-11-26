@@ -18,6 +18,7 @@ data class Settings(
     val avatarPath: String = "",
     val textColor: String = "black",
     val customInterval: String = "",
+    val customText: String = "",
 )
 
 class SettingsRepository(private val context: Context) {
@@ -30,6 +31,7 @@ class SettingsRepository(private val context: Context) {
     private val KEY_AVATAR = stringPreferencesKey("avatar")
     private val KEY_TEXTCOLOR = stringPreferencesKey("textcolor")
     private val KEY_INTERVAL_CUSTOM = stringPreferencesKey("interval_custom")
+    private val KEY_CUSTOM_TEXT = stringPreferencesKey("custom_text")
 
     val settings = context.dataStore.data.map { p ->
         Settings(
@@ -42,6 +44,7 @@ class SettingsRepository(private val context: Context) {
             avatarPath = p[KEY_AVATAR] ?: "",
             textColor = p[KEY_TEXTCOLOR] ?: "black",
             customInterval = p[KEY_INTERVAL_CUSTOM] ?: "",
+            customText = p[KEY_CUSTOM_TEXT] ?: "",
         )
     }
 
@@ -56,6 +59,7 @@ class SettingsRepository(private val context: Context) {
             p[KEY_AVATAR] = s.avatarPath
             p[KEY_TEXTCOLOR] = s.textColor
             p[KEY_INTERVAL_CUSTOM] = s.customInterval
+            p[KEY_CUSTOM_TEXT] = s.customText
         }
     }
 }
