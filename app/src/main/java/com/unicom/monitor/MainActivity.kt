@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.*
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.ExistingWorkPolicy
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -95,6 +97,30 @@ fun AppScreen() {
                 scope.launch { repo.save(settings) }
                 message = "背景已设置"
             } catch (e: Exception) { message = "背景设置失败: ${e.message}" }
+        }
+    }
+
+    val pickAppIcon = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            try {
+                val file = File(ctx.filesDir, "app_icon")
+                ctx.contentResolver.openInputStream(uri)?.use { input ->
+                    file.outputStream().use { output -> input.copyTo(output) }
+                }
+                val bmp = BitmapFactory.decodeFile(file.absolutePath)
+                if (bmp != null) {
+                    val shortcut = androidx.core.content.pm.ShortcutInfoCompat.Builder(ctx, "custom_icon")
+                        .setShortLabel("联通")
+                        .setLongLabel("联通流量监控")
+                        .setIcon(androidx.core.graphics.drawable.IconCompat.createWithBitmap(bmp))
+                        .setIntent(android.content.Intent(ctx, MainActivity::class.java).setAction(android.content.Intent.ACTION_VIEW))
+                        .build()
+                    androidx.core.content.pm.ShortcutManagerCompat.pushDynamicShortcut(ctx, shortcut)
+                    message = "已创建图片图标快捷方式，去桌面看看"
+                } else {
+                    message = "图片解码失败"
+                }
+            } catch (e: Exception) { message = "图标创建失败: ${e.message}" }
         }
     }
 
@@ -394,9 +420,12 @@ fun SettingsDialog(
                         val s = settings.copy(customInterval = v)
                         onUpdate(s); scope.launch { repo.save(s) }
                         val m = v.toIntOrNull()
-                        if (m != null && m >= 15) {
-                            val work = PeriodicWorkRequestBuilder<MonitorWorker>(m.toLong(), TimeUnit.MINUTES).build()
-                            WorkManager.getInstance(ctx).enqueueUniquePeriodicWork("unicom_monitor", ExistingPeriodicWorkPolicy.REPLACE, work)
+                        if (m != null && m >= 1) {
+                            // OneTimeWork + 完成后自调度，支持 1 分钟起（绕过 15 分钟限制）
+                            val work = OneTimeWorkRequestBuilder<MonitorWorker>()
+                                .setInitialDelay(m.toLong(), TimeUnit.MINUTES)
+                                .build()
+                            WorkManager.getInstance(ctx).enqueueUniqueWork("unicom_monitor", ExistingWorkPolicy.REPLACE, work)
                         }
                     },
                     label = { Text("例如 30（分钟）") },
@@ -417,6 +446,9 @@ fun SettingsDialog(
                     listOf("IconBlue" to "蓝", "IconGreen" to "绿", "IconPurple" to "紫", "IconOrange" to "橙").forEach { (k, label) ->
                         Button(onClick = { switchIcon(ctx, k) }) { Text(label) }
                     }
+                }
+                Button(onClick = { pickAppIcon.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                    Text("自定义图片图标（创建快捷方式）")
                 }
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
