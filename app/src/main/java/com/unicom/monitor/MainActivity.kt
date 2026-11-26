@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.*
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -152,6 +153,7 @@ fun AppScreen() {
         },
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val topAvatar = remember(settings.avatarPath) {
@@ -261,12 +263,12 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text("${e[0]} 跳 ➠ ${d.unsharedFlowMb}M", fontSize = 15.sp, color = textColor)
-                Text("${e[1]} 免 ➠ ${d.freeFlowGb}G", fontSize = 15.sp, color = textColor)
+                Text("${e[0]} 跳(通用已用) ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免(免流已用) ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
-                Text("${e[5]} 今日跳量 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[5]} 今日已用 ➠ ${d.dailyMb}M", fontSize = 15.sp, color = textColor)
                 Text("${e[6]} 剩余流量 ➠ ${"%.2f".format(d.remainGb)}G", fontSize = 15.sp, color = textColor)
                 Text("————————————————", fontSize = 13.sp, color = Color.Gray)
                 Text("${e[7]} 联通时间 ➠ ${d.updateTime}", fontSize = 15.sp, color = textColor)
