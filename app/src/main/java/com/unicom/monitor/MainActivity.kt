@@ -260,6 +260,7 @@ fun AppScreen() {
             onPickImage = { pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             onPickBg = { pickBg.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             onPickAvatar = { pickAvatar.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            onPickAppIcon = { pickAppIcon.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             onClose = { showSettings = false },
             ctx = ctx,
         )
@@ -357,6 +358,7 @@ fun SettingsDialog(
     onPickImage: () -> Unit,
     onPickBg: () -> Unit,
     onPickAvatar: () -> Unit,
+    onPickAppIcon: () -> Unit,
     onClose: () -> Unit,
     ctx: android.content.Context,
 ) {
@@ -447,7 +449,7 @@ fun SettingsDialog(
                         Button(onClick = { switchIcon(ctx, k) }) { Text(label) }
                     }
                 }
-                Button(onClick = { pickAppIcon.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
+                Button(onClick = onPickAppIcon) {
                     Text("自定义图片图标（创建快捷方式）")
                 }
                 Text("头像（聊天气泡左侧）", fontWeight = FontWeight.Bold)
