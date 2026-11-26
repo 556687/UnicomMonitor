@@ -14,6 +14,7 @@ data class Settings(
     val intervalHours: Int = 1,
     val emojiSet: String = "classic",
     val imagePath: String = "",
+    val bgPath: String = "",
 )
 
 class SettingsRepository(private val context: Context) {
@@ -22,6 +23,7 @@ class SettingsRepository(private val context: Context) {
     private val KEY_INTERVAL = stringPreferencesKey("interval")
     private val KEY_EMOJI = stringPreferencesKey("emoji")
     private val KEY_IMAGE = stringPreferencesKey("image")
+    private val KEY_BG = stringPreferencesKey("bg")
 
     val settings = context.dataStore.data.map { p ->
         Settings(
@@ -30,6 +32,7 @@ class SettingsRepository(private val context: Context) {
             intervalHours = (p[KEY_INTERVAL] ?: "1").toIntOrNull() ?: 1,
             emojiSet = p[KEY_EMOJI] ?: "classic",
             imagePath = p[KEY_IMAGE] ?: "",
+            bgPath = p[KEY_BG] ?: "",
         )
     }
 
@@ -40,6 +43,7 @@ class SettingsRepository(private val context: Context) {
             p[KEY_INTERVAL] = s.intervalHours.toString()
             p[KEY_EMOJI] = s.emojiSet
             p[KEY_IMAGE] = s.imagePath
+            p[KEY_BG] = s.bgPath
         }
     }
 }
