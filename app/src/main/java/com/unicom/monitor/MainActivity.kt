@@ -58,6 +58,7 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+        startService(android.content.Intent(this, MonitorService::class.java))
         setContent { MaterialTheme { AppScreen() } }
     }
 }
