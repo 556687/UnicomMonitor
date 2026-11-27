@@ -81,6 +81,7 @@ fun AppScreen() {
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { repo.settings.collect { settings = it } }
+    var autoLoaded by remember { mutableStateOf(false) }
 
     val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) {
@@ -191,6 +192,14 @@ fun AppScreen() {
                 Image(bg.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             }
         }
+    LaunchedEffect(settings.cookie, autoLoaded) {
+        if (!autoLoaded && settings.cookie.isNotBlank()) {
+            autoLoaded = true
+            kotlinx.coroutines.delay(300)
+            refresh()
+        }
+    }
+
     Scaffold(
         containerColor = Color.Transparent,
         bottomBar = {
