@@ -58,7 +58,12 @@ class MainActivity : ComponentActivity() {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        startService(android.content.Intent(this, MonitorService::class.java))
+        val svc = android.content.Intent(this, MonitorService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(svc)
+        } else {
+            startService(svc)
+        }
         setContent { MaterialTheme { AppScreen() } }
     }
 }
