@@ -158,11 +158,14 @@ fun AppScreen() {
                 )
                 val curDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
                 var todayG = if (settings.todayDate == curDate) (settings.todayGeneral.toDoubleOrNull() ?: 0.0) else 0.0
+                var todayF = if (settings.todayDate == curDate) (settings.todayFree.toDoubleOrNull() ?: 0.0) else 0.0
                 todayG += jumpDelta
+                todayF += freeDelta
                 settings = settings.copy(
                     lastGeneral = d0.usedGb.toString(),
                     lastFree = d0.freeUsedGb.toString(),
                     todayGeneral = todayG.toString(),
+                    todayFree = todayF.toString(),
                     todayDate = curDate,
                 )
                 repo.save(settings)
@@ -248,7 +251,7 @@ fun AppScreen() {
                     }
                 }
                 cards.forEach { d ->
-                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor), settings.customText, settings.todayGeneral.toDoubleOrNull() ?: 0.0)
+                    BalanceCard(d, settings.emojiSet, settings.avatarPath, resolveTextColor(settings.textColor), settings.customText, settings.todayGeneral.toDoubleOrNull() ?: 0.0, settings.todayFree.toDoubleOrNull() ?: 0.0)
                     Spacer(Modifier.height(10.dp))
                 }
                 Spacer(Modifier.height(70.dp))
@@ -281,7 +284,7 @@ fun AppScreen() {
 }
 
 @Composable
-fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black, customText: String = "", todayGeneral: Double = 0.0) {
+fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor: Color = Color.Black, customText: String = "", todayGeneral: Double = 0.0, todayFree: Double = 0.0) {
     val e = NotificationHelper.emojis(emojiSet)
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
@@ -314,8 +317,8 @@ fun BalanceCard(d: BalanceData, emojiSet: String, avatarPath: String, textColor:
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(d.packageName, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = textColor)
                 Spacer(Modifier.height(4.dp))
-                Text("${e[0]} 跳 ➠ ${d.jumpDeltaMb}M", fontSize = 15.sp, color = textColor)
-                Text("${e[1]} 免 ➠ ${d.freeDeltaMb}M", fontSize = 15.sp, color = textColor)
+                Text("${e[0]} 跳 ➠ ${"%.2f".format(todayGeneral)}M", fontSize = 15.sp, color = textColor)
+                Text("${e[1]} 免 ➠ ${"%.2f".format(todayFree)}M", fontSize = 15.sp, color = textColor)
                 Text("${e[2]} 总流量 ➠ ${"%.2f".format(d.totalGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[3]} 已消耗 ➠ ${"%.2f".format(d.usedGb)}G", fontSize = 15.sp, color = textColor)
                 Text("${e[4]} 免流已用 ➠ ${"%.2f".format(d.freeUsedGb)}G", fontSize = 15.sp, color = textColor)
