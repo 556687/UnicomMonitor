@@ -22,6 +22,7 @@ data class Settings(
     val lastGeneral: String = "",
     val lastFree: String = "",
     val todayGeneral: String = "",
+    val todayFree: String = "",
     val todayDate: String = "",
     val keepTodayOnReset: Boolean = true,
 )
@@ -40,6 +41,7 @@ class SettingsRepository(private val context: Context) {
     private val KEY_LAST_G = stringPreferencesKey("last_general")
     private val KEY_LAST_F = stringPreferencesKey("last_free")
     private val KEY_TODAY_G = stringPreferencesKey("today_general")
+    private val KEY_TODAY_F = stringPreferencesKey("today_free")
     private val KEY_TODAY_DATE = stringPreferencesKey("today_date")
     private val KEY_KEEP_TODAY = stringPreferencesKey("keep_today_reset")
 
@@ -58,6 +60,7 @@ class SettingsRepository(private val context: Context) {
             lastGeneral = p[KEY_LAST_G] ?: "",
             lastFree = p[KEY_LAST_F] ?: "",
             todayGeneral = p[KEY_TODAY_G] ?: "",
+            todayFree = p[KEY_TODAY_F] ?: "",
             todayDate = p[KEY_TODAY_DATE] ?: "",
             keepTodayOnReset = p[KEY_KEEP_TODAY] != "false",
         )
@@ -82,6 +85,7 @@ class SettingsRepository(private val context: Context) {
             p[KEY_LAST_G] = s.lastGeneral
             p[KEY_LAST_F] = s.lastFree
             p[KEY_TODAY_G] = s.todayGeneral
+            p[KEY_TODAY_F] = s.todayFree
             p[KEY_TODAY_DATE] = s.todayDate
             p[KEY_KEEP_TODAY] = s.keepTodayOnReset.toString()
         }
